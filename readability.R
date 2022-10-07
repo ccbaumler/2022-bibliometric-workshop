@@ -1,6 +1,10 @@
 #A script to create a readability list from Scopus/WoS search results
 
-library(bibliometrix)  #Load the site search results
+#library(bibliometrix)  #Load the site search results
+if(!require(bibliometrix)) {
+    install.packages("bibliometrix"); 
+    require(bibliometrix)
+    }
 library(quanteda.textstats) # analysis tool for readability - https://www.rdocumentation.org/packages/quanteda.textstats/versions/0.96
                             # https://www.rdocumentation.org/packages/quanteda.textstats/versions/0.95/topics/textstat_readability
 library(dplyr)
