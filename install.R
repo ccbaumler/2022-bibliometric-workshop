@@ -1,4 +1,5 @@
-install.packages("bibliometrix")
+install.packages("remotes")         
+remotes::install_github("massimoaria/bibliometrix")
 install.packages("quanteda.textstats")
 install.packages("dplyr")
 install.packages("gt")
