@@ -6,7 +6,7 @@ library(quanteda.textstats) # analysis tool for readability - https://www.rdocum
 library(dplyr)
 library(gt)
 # Converting database search export files into R bibliographic dataframe
-M <- bibliometrix::convert2df(file="scopus_CRC_MandM.bib", dbsource="scopus",format="bibtex")
+M <- convert2df(file="scopus_CRC_MandM.bib", dbsource="scopus",format="bibtex")
 
 #create an abstract only vector
 abstracts <- M$AB
