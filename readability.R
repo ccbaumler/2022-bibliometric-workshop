@@ -1,15 +1,21 @@
 #A script to create a readability list from Scopus/WoS search results
 
+library(dplyr) # Data manipulation
+library(gt) #Presentation-ready tables
 library(bibliometrix)  #Load the site search results
 library(quanteda.textstats) # analysis tool for readability - https://www.rdocumentation.org/packages/quanteda.textstats/versions/0.96
                             # https://www.rdocumentation.org/packages/quanteda.textstats/versions/0.95/topics/textstat_readability
-library(dplyr)
-library(gt)
+
 # Converting database search export files into R bibliographic dataframe
 M <- convert2df(file="scopus_CRC_MandM.bib", dbsource="scopus",format="bibtex")
+class(M)
+glimpse(M)
 
-#create an abstract only vector
+
+#create an abstract only character vector
 abstracts <- M$AB
+class(abstracts)
+glimpse(abstracts)
 
 ###
 #From Write better, publish better
@@ -26,6 +32,7 @@ abstracts <- M$AB
 ###
 
 #We could build a dataframe for each individual statistic
+
 ##The old formula from Dale and Chall 1948. the higher the score the higher the
 ##grade of the writing. >9 is college.
 dc <- textstat_readability(abstracts, measure = "Dale.Chall.old")
@@ -48,22 +55,24 @@ head(f)
 merged_stats <- do.call(cbind, list(dc, fk, fog, smog, f))
 head(merged_stats)
 
-#Now we have numerous duplicate rows that need to be removed
+#But now we have numerous duplicate rows that need to be removed
 merged_stats <- merged_stats[ , !duplicated(colnames(merged_stats))]
 head(merged_stats)
 
-#This can all be done in a single command where we use `c()` to combine arguments
-#While this simplification removes many redundant lines of code, it also prevents
-#Errors in the data manipulation 
+#This can all be done in a single command where we use `c()` to combine 
+#arguments. While this simplification removes many redundant lines of code, it 
+#also prevents errors in the data manipulation 
 all_stats <- textstat_readability(M$AB, measure = c("Dale.Chall.old",
                                        "Flesch.Kincaid",
                                        "FOG", 
                                        "SMOG",
                                        "Flesch"))
 head(all_stats)
+class(all_stats)
+glimpse(all_stats)
 
-
-#In addition, using the dplyr package, we can `pipe` sequential commands like so...
+#In addition, using the dplyr package, we can `pipe` sequential commands 
+#like so... This creates 
 r.ab <- M$AB %>% 
   textstat_readability(measure = c("Dale.Chall.old", #min
                                    "Flesch.Kincaid", #min
@@ -72,28 +81,39 @@ r.ab <- M$AB %>%
                                    "Flesch")) %>% #max 
   cbind(M$TI) %>% #add titles
   rename(Titles=7)%>%
+  cbind(M$DI) %>%
+  rename(DI=8) %>%
   na.omit() #remove NA values
+class(r.ab)
+glimpse(r.ab)
 
-#Summarize the data
+#Summarize the data to see basic metrics of the values per column
 summary(r.ab)
 
 
 
-#Finally, let's create a list of readability. If I create a subset from the 
-#original dataframe column that is ranked, I get a ranked list of 1-10.
-sort(r.ab$Dale.Chall.old)
-head(r.ab$Dale.Chall.old, n = 10)
+#Let's create some lists of document readability. 
 
-sort(head(r.ab$Dale.Chall.old, n = 10))
-
+#Using the `sort()` and `head()`commands, 
+#we can start to create some basic lists.
+#These commands are both part of base R.
 #Placing a `?` in front of a command will show documnetation on the command
 ?head()
 ?sort()
+
+sort(r.ab$Dale.Chall.old)
+head(r.ab$Dale.Chall.old, n = 10)
+
+#If I create a subset from a dataframe column that is ranked, 
+#I get a ranked list of 1-10.
+sort(head(r.ab$Dale.Chall.old, n = 10))
 
 #If I create a ranked list from the original dataframe column that is a subset, 
 #I get a ranked list of the readability metric.
 head(sort(r.ab$Dale.Chall.old), n = 10)
 
+#The `mutate()` command is from the dplyr package. It allows us to 
+#"create, modify, and delete columns" in our database.
 #We could try creating a sorted database, but what's wrong with this?
 ranked_list <- r.ab %>%
   mutate(dco_rank = sort(Dale.Chall.old), 
@@ -103,21 +123,23 @@ ranked_list <- r.ab %>%
          f_rank = sort(Flesch, decreasing = TRUE))
 #We get new columns that are tied to the rows in an incorrect order!
 
-#Let's try a different approach! `arrange()` is a dplyr function that will create
-#a similar output as `sort()`. With the `gt` library, we can make pretty tables!
-r.ab %>%  
-  arrange(Dale.Chall.old) %>%
-  head(n=10) %>%
-  select(Titles, Dale.Chall.old) %>%
-  gt(groupname_col = "Titles") %>%
-  fmt_number(columns = Dale.Chall.old, decimals = 2) 
-
+#Let's try a different approach! `arrange()` is a dplyr function 
+#that will create a similar output as `sort()`. With the `gt` library, 
+#we can make pretty tables!
 r.ab %>%  
   arrange(Flesch.Kincaid) %>%
   head(n=10) %>%
   select(Titles, Flesch.Kincaid) %>%
   gt(groupname_col = "Titles") %>%
   fmt_number(columns = Flesch.Kincaid, decimals = 2)
+
+
+r.ab %>%  
+  arrange(Dale.Chall.old) %>%
+  head(n=10) %>%
+  select(Titles, Dale.Chall.old, document) %>%
+  gt(groupname_col = "Titles") %>%
+  fmt_number(columns = Dale.Chall.old, decimals = 2)
 
 r.ab %>%  
   arrange(FOG) %>%
@@ -140,25 +162,133 @@ r.ab %>%
   gt(groupname_col = "Titles") %>%
   fmt_number(columns = Flesch, decimals = 2)
   
-#The first two in this sample may suggest; (1) I need to perform a better search 
-#that will eliminate corrections 
-print(M[166,"AB"])
-print(M[51,"AB"])
-print(M[166,"url"])
+#The first sample may suggest I need to refine my search 
+#to eliminate document corrections.
+top_n(r.ab, 1, Flesch)
 
-#Can I make a for loop? duck if i know
-df <- data.frame()
-for (i in length(colnames(r.ab))) {
-  if (i %in% c(1,7)) next
-  if (i %in% 6){
-    df <- arrange((r.ab[i])) %>%
-      select(Titles) %>%
-      head(n=10)
-  }
-  else {
-    df <- sort(r.ab[i]) %>%
-      filter(head(n=10))
-  }
-  df1[[i]] <- df
-}
-head(df)
+print(M[51,"AB"])
+print(M[51,"url"])
+
+#Finally, lets make a table that is presentation-ready. 
+#What is the best way to wrangle the data to create a 
+#readable and visually pleasing table?
+#Maybe we could use a for loop?
+#Can I make a for loop? Nope, and I doooon't neeeed toooo!!!
+#The `gt` package working with the `dplyr` package to 'simplify'
+#the creatation process.
+
+#Let's concatenate the columns of readability
+#stats into a column of names and values
+looong <- tidyr::pivot_longer(r.ab, 
+                              cols = c(Dale.Chall.old,
+                                       FOG,
+                                       SMOG,
+                                       Flesch.Kincaid,
+                                       Flesch)
+                              )
+class(looong)
+glimpse(looong)
+
+#This is a long list of dplyr functions that will highlight 
+#the value of learning this type of command piping. 
+#This table will display the top ten articles in
+#each readability category. These articles will be displayed with the 'most' 
+#readable document first in each category.
+looong %>% #Use the longer dataframe
+  mutate(Titles = sprintf('<a href = "https://www.doi.org/%s">%s</a>', 
+                          DI, 
+                          Titles),
+         Titles = lapply(Titles, gt::html)) %>% #Hyperlink each Title with DOI link
+  arrange(factor(name, levels = c("Flesch",
+                                  "Dale.Chall.old",
+                                  "FOG",
+                                  "SMOG",
+                                  "Flesch.Kincaid"
+                                  )
+          ), value) %>%
+  group_by(name) %>% #while we could use 
+                     #`group_by(name) %>% arrange(name, value)`
+                     #using `arrange(factor())` allows us to
+                     #set the order of the groups!
+  filter((name %in% c("Dale.Chall.old", "FOG", "SMOG", "Flesch.Kincaid") & 
+            row_number() %in% 1:10 |
+            (name %in% "Flesch" & row_number() %in% (n()-9):n()))) %>% 
+  #above we "filtered" the first 10 and bottom 10 rows of corresponding stats
+  #remember that we have "arranged" each group by ascending values 
+  arrange(value = ifelse(name %in% "Flesch", desc(value),
+                        value)) %>% #if the name column contains Flesch
+                                    #"arrange" by decreasing values 
+  gt() %>%
+  cols_hide(columns = c(document, DI)) %>%
+  tab_stubhead(label = "Titles") %>%
+  fmt_number(columns = value, decimals = 2)  %>%
+  tab_header(
+    title = md("The *most* readable documents"),
+    subtitle = "Five readability statistics; Flesch, the old Dale-Chall, FOG, SMOG, and Flesch-Kincaid"
+  ) %>%
+  tab_style(
+    locations = cells_title(groups = "title"),
+    style     = list(
+      cell_text(weight = "bold", 
+                size = 24)
+      )
+    )%>%
+  tab_options(
+    column_labels.border.top.width = px(3),
+    column_labels.border.top.color = "transparent",
+    table.border.top.color = "transparent",
+    table.border.bottom.color = "transparent",
+    data_row.padding = px(3),
+    source_notes.font.size = 12,
+    row_group.background.color = "grey") %>%
+  tab_style(
+    locations = cells_column_labels(columns = everything()),
+    style     = list(
+      cell_borders(sides = "bottom", 
+                   weight = px(3)),
+      cell_text(weight = "bold")
+      )
+    ) %>%
+  tab_style(
+    style = list(
+      cell_text(
+        align = "center",
+        weight = "bold"
+      )
+    ),
+    locations = list(
+      cells_row_groups(
+        groups = c("Dale.Chall.old",
+                   "FOG",
+                   "SMOG",
+                   "Flesch.Kincaid",
+                   "Flesch")
+      )
+    )
+  ) %>%
+  cols_align(
+    align = "left",
+    columns = Titles
+  ) %>%
+  tab_style(
+    style = cell_text(size = px(12)),
+    locations = cells_body(
+      columns = Titles
+    )
+  ) %>%
+  tab_source_note(
+    source_note = md("Source: SCOPUS, Colorectal Metagenome and Metabolome Search")
+  ) %>%
+  tab_source_note(
+    source_note = md(
+      'Query: TITLE-ABS-KEY ( "colorectal cancer*"  OR  "colorectal neoplas*"  OR  "adenomatous polyposis coli"  OR  "colon* neoplas*"  OR  "rectal neoplas*"  OR  "hereditary nonpolypo*"  AND  "metagenom*"  AND  "metabol*" )'
+    )
+  ) %>%
+  tab_footnote(
+    footnote = md("The **lowest** estimated grade level."),
+    locations = cells_body(
+      columns = value, 
+      rows = value == min(value)
+    )
+  ) %>%
+  opt_footnote_marks(marks = c("*", "+"))
