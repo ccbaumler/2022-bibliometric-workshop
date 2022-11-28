@@ -1,8 +1,9 @@
 library(bibliometrix)
 library(tidyverse)
+library(gt)
 
 wos <- convert2df(file = "wos-plaintext-savedrecs.txt", dbsource="wos",format="plaintext")
-scopb <- convert2df(file = "2022-bibliometric-workshop/scopus-bib-crc.bib", dbsource = "scopus", format = "bibtex")
+scopb <- convert2df(file = "scopus-bib-crc.bib", dbsource = "scopus", format = "bibtex")
 pubmed <- convert2df(file = "pubmed-plaintext-colorectal-set.txt", dbsource = "pubmed", format = "plaintext")
 
 fulldb <- mergeDbSources(wos, scopb, pubmed, remove.duplicated = TRUE)
