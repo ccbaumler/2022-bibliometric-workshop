@@ -2,17 +2,12 @@ library(bibliometrix)
 library(tidyverse)
 
 wos <- convert2df(file = "wos-plaintext-savedrecs.txt", dbsource="wos",format="plaintext")
-scop <- convert2df(file = "scopus-plaintext-crc.csv", dbsource = "scopus", format = "plaintext")
 scopb <- convert2df(file = "2022-bibliometric-workshop/scopus-bib-crc.bib", dbsource = "scopus", format = "bibtex")
 pubmed <- convert2df(file = "pubmed-plaintext-colorectal-set.txt", dbsource = "pubmed", format = "plaintext")
 
-missingdb <- mergeDbSources(wos, scop, pubmed, remove.duplicated = TRUE)
 fulldb <- mergeDbSources(wos, scopb, pubmed, remove.duplicated = TRUE)
 
 #check the row count difference between the merged and the full count of all the databases
-nrow(missingdb)
-sum(nrow(wos)+nrow(scop)+nrow(pubmed))
-
 nrow(fulldb)
 sum(nrow(wos)+nrow(scopb)+nrow(pubmed))
 
