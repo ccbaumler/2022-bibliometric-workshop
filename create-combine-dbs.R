@@ -1,6 +1,5 @@
 library(bibliometrix)
 library(tidyverse)
-library(metagear)
 
 wos <- convert2df(file = "wos-plaintext-savedrecs.txt", dbsource="wos",format="plaintext")
 scop <- convert2df(file = "scopus-plaintext-crc.csv", dbsource = "scopus", format = "plaintext")
@@ -31,6 +30,12 @@ summary(results, k=20)
 plot(x=results, k=20, pause=F)
 
 mcp %>% head(n=20) %>% gt()
+
+#Below is a technique to curate the list further by viewing the title and abstract on 
+#each paper selecting only the papers that are most worthy. This method opens a new 
+#window to perform the survey which does not work in the virtual environment. Try it
+#out in your local RStudio!
+library(metagear)
 
 #Change the sentence case from full capitalize to only the first word of the sentence.
 crc <- fulldb %>% 
