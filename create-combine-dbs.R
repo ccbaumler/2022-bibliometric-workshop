@@ -3,7 +3,7 @@ library(tidyverse)
 library(metagear)
 
 wos <- convert2df(file = "wos-plaintext-savedrecs.txt", dbsource="wos",format="plaintext")
-scop <- convert2df(file = "scopus-plaintext-crc.csv", dbsource = "scopus", format = "plaintext")
+scop <- convert2df(file = "scopus-bib-crc.bib", dbsource = "scopus", format = "bibtex")
 pubmed <- convert2df(file = "pubmed-plaintext-colorectal-set.txt", dbsource = "pubmed", format = "plaintext")
 
 fulldb <- mergeDbSources(wos, scop, pubmed, remove.duplicated = TRUE)
