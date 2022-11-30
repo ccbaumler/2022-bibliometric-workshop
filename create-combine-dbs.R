@@ -6,7 +6,7 @@ library(gt) #Make a nice table
 
 #Convert individual query export files from respective databases to a dataframe
 wos <- convert2df(file = "wos-plaintext-savedrecs.txt", dbsource="wos",format="plaintext")
-scop <- convert2df(file = "2022-bibliometric-workshop/scopus-bib-crc.bib", dbsource = "scopus", format = "bibtex")
+scop <- convert2df(file = "scopus-bib-crc.bib", dbsource = "scopus", format = "bibtex")
 pubmed <- convert2df(file = "pubmed-plaintext-colorectal-set.txt", dbsource = "pubmed", format = "plaintext")
 
 #Combine each dataframe into a single one without keeping duplications
@@ -105,6 +105,12 @@ CR %>%
 #deviations from the median. At these peaks, refer back to our most cited
 #reference per year table to look into that article.
 peaks <- rpys(fulldb, timespan = c(1970,2022), sep = ";")
+CR %>%
+  as.data.frame() %>%
+  filter(Year>=1826) %>%
+  group_by(Year) %>%
+  slice(which.max(Cited.Freq)) %>%
+  print(n = 90) 
 
 ######
 
