@@ -131,5 +131,4 @@ effort_distribute(crc, reviewers = 'Colton', initialize = TRUE, save_split = TRU
 #Open GUI for screening papers
 abstract_screener('effort_Colton.csv', 'Colton', abstractColumnName = 'AB', titleColumnName = 'TI', windowWidth = 120)
 
-saveRDS(missingdb, file = "wos-scopus-pubmed-mdb.rds")
 saveRDS(fulldb, file = "wos-scopus-pubmed-fdb.rds")
