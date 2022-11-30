@@ -7,7 +7,7 @@ library(quanteda.textstats) # analysis tool for readability - https://www.rdocum
                             # https://www.rdocumentation.org/packages/quanteda.textstats/versions/0.95/topics/textstat_readability
 
 # Converting database search export files into R bibliographic dataframe
-M <- convert2df(file="2022-bibliometric-workshop/scopus-bib-crc.bib", dbsource="scopus",format="bibtex")
+M <- convert2df(file="scopus-bib-crc.bib", dbsource="scopus",format="bibtex")
 class(M)
 glimpse(M)
 
